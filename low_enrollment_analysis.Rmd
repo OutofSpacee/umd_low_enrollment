@@ -1,0 +1,109 @@
+---
+title: "low_enrollment_analysis"
+output: html_document
+---
+
+*Note on definition change*
+From 2021 on the University of Maryland changed their title of "New Freshmen" to "New First-time Students". With the name change came a definition change. From 1992-2020 "New Freshmen were defined as:
+  
+  "Students who applied and were admitted as first-time students into the typical freshmen class and have access to the full complement of UMD courses. Freshmen Connection and Applied Agriculture students are not included."
+  
+From 2021-2024 "New First-time Students" are defined as:
+
+  "As defined by the federal government, these are students who have no prior post secondary experience (with the exception of concurrent enrollment or enrollment in the summer immediately following high school) and are therefore attending an institution for the first time at the undergraduate level. This group includes new freshmen, Freshmen Connection, and new Applied Agriculture students."
+  
+While the difference in the two are not very significant it led to two PDFs and therefore two raw excel sheets. Data was taken from the excel sheets and then transformed into a single csv file in Google sheets.
+*end*
+
+*1* Import needed libraries
+
+```{r Libraries}
+
+library(tidyverse)
+library(janitor)
+library(lubridate)
+
+```
+
+*2* Importing the data
+
+```{r Importing Data}
+
+umd_enrollment_data <- read_csv("data/low_enrollment - combined_data.csv") |> clean_names()
+
+```
+*3* Looking at the format of the columns
+
+```{r}
+
+glimpse(umd_enrollment_data)
+
+```
+*4* Everything looks good, time to create additional columns.
+  
+  Columns needed: percent_admitted, percent_enrolled, proportion_admitted, proportion_enrolled, percent_change
+  
+  The formulas for the percent admitted and percent enrolled are taken from the university: https://reports.umd.edu/tableaupublic/1814. They can be found at the bottom of the color legend column.
+  
+  The code below gives the following basic findings:
+
+  1) 2024 percent enrolled: 22%
+  2) 2024 number admitted: 27,000
+  
+```{r}
+
+umd_enrollment_data <- umd_enrollment_data |>
+  mutate(
+    percent_admitted = (number_admitted / applications) *100, 
+    percent_enrolled = (number_enrolled / number_admitted) *100, #formula used by UMD
+    proportion_admitted = number_admitted / applications, #proportions calculated for possible                                                                future calculations
+    proportion_enrolled = number_enrolled / number_admitted
+)
+```
+
+*5* The following shows that 2024 had the lowest percent enrolled between 2000-2024.
+  
+```{r}
+
+umd_enrollment_data |>
+  arrange(percent_enrolled)
+
+```
+
+*6* The following shows that the university accepted a record high number of applicants. 
+
+```{r}
+
+umd_enrollment_data |>
+  arrange(desc(number_admitted))
+
+```
+
+*7* Note: The university, though, did not have the highest acceptance rate in 2024. It had a generally average acceptance rate at 45%.
+
+This may need to be added into the story as to not confuse high admittance numbers with high admittance rates.
+
+A way to do it: 
+  The university selected just under 45% of all Fall 2024 applicants, despite admitting a high number of students. 
+  ^Something like this.
+
+```{r}
+
+umd_enrollment_data |>
+  arrange(desc(percent_admitted))
+
+```
+
+*8* The following finds that the university experienced a drop in the number of students enrolled.
+  
+  Finds: UMD saw lowest enrollment since 2020. OR UMD saw lowest enrollment in 3 three years.
+    Key word: "since" because it signifies that 2020 had a lower number of enrolled students.
+
+```{r}
+
+umd_enrollment_data |>
+  select(year, number_enrolled) |>
+  arrange(desc(number_enrolled))
+
+```
+
